@@ -1,4 +1,6 @@
 require(CSSR)
+source("../../src/run_cssr_by_min_bic.R")
+
 
 data_file <- "../../data/demo_two-states.txt"
 out_file <- paste0(data_file, ".out", collapse="")
