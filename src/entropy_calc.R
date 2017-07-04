@@ -1,3 +1,5 @@
+# author: jlweissman
+
 require(plyr)
 
 
@@ -6,21 +8,28 @@ all_substr <- function(x, n){
 }
 
 
-compute_shannon_entropy <- function(p) {
+get_shannon_entropy <- function(p) {
 	-sum(p * log2(p))
 }
 
 
 get_HL <- function(L, seq) {
 	a <- table(all_substr(seq, L))
-	return(compute_shannon_entropy(a / sum(a)))
+	return(get_shannon_entropy(a / sum(a)))
 }
 
 
-get_entropy_curve <- function(seq, maxL) {
+get_entropy_curve <- function(seq, maxL=500) {
 	HL <- lapply(1:maxL, get_HL, seq=seq)
 	hmu <- diff(unlist(HL))
 	return(hmu)
+}
+
+
+get_excess_entropy <- function(data) {
+	hmuL <- get_entropy_curve(data)
+	E <- sum(hmuL - hmuL[length(hmuL)])
+	return(E)
 }
 
 
