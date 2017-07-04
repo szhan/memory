@@ -26,22 +26,23 @@ compute_lnlik_cssr <- function(res, alphabet, data, exponent=5) {
   }
 
   # Compute log likelihood of data given inferred HMM
-  base_mul_factor <- 10^exponent
   min_threshold <- 10^-exponent
-  log_mul_factor <- 0
-  
+  base_factor <- 10^exponent
+  log2_base_factor <- log2(base_factor)
+  log2_mul_factor <- log2(1)
+
   lik <- state_prob
   for ( n in data_seq ) {
     idx <- grep(n, alpha_seq)
     lik <- lik %*% state_mat[[idx]]
     if ( sum(lik) < min_threshold ) {
-      lik <- lik * base_mul_factor
-      log_mul_factor <- log_mul_factor + log(base_mul_factor)
+      lik <- lik * base_factor
+      log2_mul_factor <- log2_mul_factor + log2_base_factor
     }
   }
   
-  lnlik <- log(sum(lik)) - log_mul_factor
-  bic <- -2*lnlik + nbr_inferred_states * (nbr_observed_states-1) * log(data_size)
+  log2lik <- log2(sum(lik)) - log2_mul_factor
+  bic <- -2*log2lik + nbr_inferred_states * (nbr_observed_states-1) * log2(data_size)
   
   return(bic)
 }
