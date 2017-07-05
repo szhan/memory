@@ -1,4 +1,5 @@
 require(CSSR)
+require(DOT)
 source("../../src/run_cssr_by_min_bic.R")
 
 
