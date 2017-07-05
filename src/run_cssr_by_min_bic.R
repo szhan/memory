@@ -62,17 +62,19 @@ run_cssr_by_min_bic <- function(alphabet, data, out_file, threshold=0) {
   best_bic <- ini_bic
   prev_bic <- ini_bic
 
-  for ( i in 2:max_hist_len ) {
-    curr_run <- runCSSR(alphabet=alphabet, data=data, maxLength=i,
-                        isChi=FALSE, sigLevel=0.001, outputPrefix=out_file)
-    curr_bic <- compute_lnlik_cssr(res=curr_run, alphabet=alphabet, data=data)
+  if ( max_hist_len >= 2 ) {
+    for ( i in 2:max_hist_len ) {
+      curr_run <- runCSSR(alphabet=alphabet, data=data, maxLength=i,
+                          isChi=FALSE, sigLevel=0.001, outputPrefix=out_file)
+      curr_bic <- compute_lnlik_cssr(res=curr_run, alphabet=alphabet, data=data)
 
-    if ( (prev_bic - curr_bic) >= threshold ) {
-      best_run <- curr_run
-      best_bic <- curr_bic
-      prev_bic <- curr_bic
-    } else {
-      break
+      if ( (prev_bic - curr_bic) >= threshold ) {
+        best_run <- curr_run
+        best_bic <- curr_bic
+        prev_bic <- curr_bic
+      } else {
+        break
+      }
     }
   }
 
