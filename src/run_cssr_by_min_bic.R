@@ -50,7 +50,7 @@ compute_lnlik_cssr <- function(res, alphabet, data, exponent=5) {
 
 # Run CSSR, sweeping over a range of max history length (1 to upper-bounded max history length),
 #   retaining the results from the run with the minimum BIC
-run_cssr_by_min_bic <- function(alphabet, data, out_file) {
+run_cssr_by_min_bic <- function(alphabet, data, out_file, threshold=0) {
   # Index corresponds to max history length
   bic_scores <- c()
 
@@ -69,11 +69,12 @@ run_cssr_by_min_bic <- function(alphabet, data, out_file) {
     bic_scores <- c(bic_scores, bic)
   }
 
-  # Identify max history length with minimum BIC
-  best_hist_len <- which(bic_scores == min(bic_scores))
-  best_run <- runCSSR(alphabet=alpha, data=dat, maxLength=best_hist_len, 
+  # Identify minimum max history length within threshold of minimum BIC 
+  # across allowable max history lengths
+  best_hist_len <- which(bic_scores == min(bic_scores) + threshold)
+  best_run <- runCSSR(alphabet=alpha, data=dat, maxLength=best_hist_len,
                       isChi=FALSE, sigLevel=0.001, outputPrefix=out_file)
 
-  return(list(results=best_run, scores=bic_scores))
+  return(list(results=best_run, scores=bic_scores, optim_hist_len=best_hist_len))
 }
 
