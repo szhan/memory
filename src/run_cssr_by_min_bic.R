@@ -51,30 +51,31 @@ compute_lnlik_cssr <- function(res, alphabet, data, exponent=5) {
 # Run CSSR, sweeping over a range of max history length (1 to upper-bounded max history length),
 #   retaining the results from the run with the minimum BIC
 run_cssr_by_min_bic <- function(alphabet, data, out_file, threshold=0) {
-  # Index corresponds to max history length
-  bic_scores <- c()
-
   # Run CSSR on max history length of 1 to determine max history length
   ini_run <- runCSSR(alphabet=alphabet, data=data, maxLength=1, 
                      isChi=FALSE, sigLevel=0.001, outputPrefix=out_file)
   ini_bic <- compute_lnlik_cssr(res=ini_run, alphabet=alphabet, data=data)
-  bic_scores <- ini_bic
   max_hist_len <- floor(log2(ini_run$info$data_size) / ini_run$results$ent_rate) - 1
-
+  
   # Run CSSR over a range of max history length
+  best_run <- ini_run
+  best_bic <- ini_bic
+  prev_bic <- ini_bic
+
   for ( i in 2:max_hist_len ) {
-    run <- runCSSR(alphabet=alphabet, data=data, maxLength=i,
-                   isChi=FALSE, sigLevel=0.001, outputPrefix=out_file)
-    bic <- compute_lnlik_cssr(res=run, alphabet=alphabet, data=data)
-    bic_scores <- c(bic_scores, bic)
+    curr_run <- runCSSR(alphabet=alphabet, data=data, maxLength=i,
+                        isChi=FALSE, sigLevel=0.001, outputPrefix=out_file)
+    curr_bic <- compute_lnlik_cssr(res=curr_run, alphabet=alphabet, data=data)
+
+    if ( (prev_bic - curr_bic) >= threshold ) {
+      best_run <- curr_run
+      best_bic <- curr_bic
+      prev_bic <- curr_bic
+    } else {
+      break
+    }
   }
 
-  # Identify minimum max history length within threshold of minimum BIC 
-  # across allowable max history lengths
-  best_hist_len <- which(bic_scores == min(bic_scores) + threshold)
-  best_run <- runCSSR(alphabet=alphabet, data=data, maxLength=best_hist_len,
-                      isChi=FALSE, sigLevel=0.001, outputPrefix=out_file)
-
-  return(list(results=best_run, scores=bic_scores, optim_hist_len=best_hist_len))
+  return(list(results=best_run, bic=best_bic))
 }
 
