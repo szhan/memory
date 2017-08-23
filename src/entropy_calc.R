@@ -85,6 +85,22 @@ generateDataFromEM <- function(best_res,n_dat=10000){
   return(data)
 }
 
+getExcessEntropy <- function(seq=0,maxL=0,hmu=0){
+  if(hmu==0){
+    if(seq!=0 && maxL!=0){
+      hmu <- getEntropyCurve(seq,maxL)
+    } else {
+      stop('Must provide sequence or pre-calculated hmu list')
+    }
+  } else {
+    maxL <- length(hmu)
+  }
 
+  cutoff_ind <- which(diff(diff(hmu))<0)[1]-1 #Where the concavity changes
+  if(cutoff_ind==0){cutoff_ind <- maxL}
+  hmu_est <- hmu[cutoff_ind]
+  E <- sum(hmu[1:cutoff_ind]-hmu_est)
+  return(c(E,hmu_est,cutoff_ind))
+}
 
 
