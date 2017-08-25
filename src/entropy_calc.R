@@ -96,7 +96,7 @@ getExcessEntropy <- function(seq=0,maxL=0,hmu=0){
     maxL <- length(hmu)
   }
 
-  cutoff_ind <- which(diff(diff(hmu))<0)[1]-1 #Where the concavity changes
+  cutoff_ind <- which(diff(diff(hmu))<0)[1] #Where the concavity changes
   if(cutoff_ind==0){cutoff_ind <- maxL}
   hmu_est <- hmu[cutoff_ind]
   E <- sum(hmu[1:cutoff_ind]-hmu_est)
