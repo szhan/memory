@@ -106,7 +106,8 @@ beta_out <- varyBeta_SIRS(len,pars,beta_seq=seq(0.1,3,0.3))
 plot(beta_out$hmu,beta_out$E,xlab=expression(h[mu]),ylab="E")
 lines(beta_out$hmu,beta_out$E)
 
-
+#library(devtools)
+#install_github("dimalik/Hrate")
 library(Hrate)
 alpha <- unlist(strsplit(test_sym, split=""))
 stabilization.rate <- stabilize.estimate(text = alpha, step.size = 1000, max.length = 50000, every.word = 10, method="downsample",rate = 5)
