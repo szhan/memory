@@ -2,25 +2,33 @@
 #Nonlinear spread (bets*S*I/(1+alpha*I^2)), so that spread decreases with increasing infectives (e.g. due to more resources spent on control),
 #added to get interesting dynamics (outbreaks, no stable eq) -> See Liu, Levin, Iwasa 1986 for complete discussion, more general forms
 #also has an "observation" component, determined by parameter rho, i.e. our probability of detecting infected individuals
-# Thus can change disease dynamics (spread speed beta, recovery rate gamma, strength of intervention alpha) or observation intensity (rho)
+# Thus can change disease dynamics (spread speed bet, recovery rate gamma, strength of intervention alpha) or observation intensity (rho)
 #JLW 23/8/17
 
-symbolizeOutput <- function(x,threshold){
-  x <- x[100:length(x)] #Allow for brief burn-in
-  x <- (x>=threshold)*1
+symbolizeOutput <- function(x,threshold,extremes=0,burnin=100){
+  x <- x[burnin:length(x)] #Allow for brief burn-in
+  
+  if(extremes==0){
+    x <- (x>=quantile(x,threshold))*1
+  } else {
+    if(threshold<0.5){stop("If using extremes=1, please use threshold >=0.5")}
+    x <- (x>=quantile(x,threshold))+(x<=quantile(x,1-threshold))
+  }
   x <- paste(x,collapse="")
   return(x)
 }
 
+
+
 stepSIS <- function(S,I,parameters){
-  N <- parameters[[1]]
-  beta <- parameters[[2]]
-  gam <- parameters[[3]]
-  rho <- parameters[[4]]
-  alpha <- parameters[[5]]
+  N <- parameters[["N"]]
+  bet <- parameters[["beta"]]
+  gam <- parameters[["gamma"]]
+  rho <- parameters[["rho"]]
+  alpha <- parameters[["alpha"]]
   
-  #t1 <- rbinom(n=1,size=S,prob=1-exp(-beta*I/N))
-  t1 <- rbinom(n=1,size=S,prob=1-exp(-beta*I/(1+alpha*I^2)))
+  #t1 <- rbinom(n=1,size=S,prob=1-exp(-bet*I/N))
+  t1 <- rbinom(n=1,size=S,prob=1-exp(-bet*I/(1+alpha*I^2)))
   t2 <- rbinom(n=1,size=I,prob=1-exp(-gam))
   
   S  <- S - t1 + t2;
@@ -33,7 +41,7 @@ stepSIS <- function(S,I,parameters){
 
 
 runSIS <- function(parameters,nsteps,full_out=F){
-  N <- parameters[[1]]
+  N <- parameters[["N"]]
   I <- 1
   S <- N-1
   
@@ -56,64 +64,45 @@ runSIS <- function(parameters,nsteps,full_out=F){
     
 }
 
-
-varyRho <- function(len,pars,rho_seq){
-  N <- pars[["N"]]
-  beta <- pars[["beta"]]
-  gam <- pars[["gamma"]]
-  alpha <- pars[["alpha"]]
+varyParameter_SIS <- function(parameter_name,parameter_seq,parameters_list,sim_length=10000,outbreak_percentile=0.75){
   out_list <- list()
   counter <- 1
-  for(rho in rho_seq){
-    parameters <- list(N,beta,gam,rho,alpha)
-    run_raw <- runSIS(parameters,10000) 
-    run_sym <- symbolizeOutput(run_raw,median(run_raw))
+  for(par in parameter_seq){
+    parameters_list[[parameter_name]] <- par
+    run_raw <- runSIS(parameters_list,sim_length) 
+    run_sym <- symbolizeOutput(run_raw,outbreak_percentile,extremes = 1)
     gEE_out <- getExcessEntropy(seq=run_sym,maxL=20)
     E <- gEE_out[1]
     hmu_est <- gEE_out[2]
-    out_list[[counter]] <- c(rho,hmu_est,E)
+    out_list[[counter]] <- c(par,hmu_est,E)
     counter <- counter+1
   }
   out_df <- as.data.frame(do.call(rbind.data.frame, out_list),stringsAsFactors=FALSE)
-  names(out_df) <- c("rho","hmu","E")
+  names(out_df) <- c("par_value","hmu","E")
   return(out_df)
 }
 
 
-varyBeta <- function(len,pars,beta_seq){
-  N <- pars[["N"]]
-  rho <- pars[["rho"]]
-  gam <- pars[["gamma"]]
-  alpha <- pars[["alpha"]]
-  out_list <- list()
-  counter <- 1
-  for(beta in beta_seq){
-    parameters <- list(N,beta,gam,rho,alpha)
-    run_raw <- runSIS(parameters,10000) 
-    run_sym <- symbolizeOutput(run_raw,median(run_raw))
-    gEE_out <- getExcessEntropy(seq=run_sym,maxL=20)
-    E <- gEE_out[1]
-    hmu_est <- gEE_out[2]
-    out_list[[counter]] <- c(beta,hmu_est,E)
-    counter <- counter+1
-  }
-  out_df <- as.data.frame(do.call(rbind.data.frame, out_list),stringsAsFactors=FALSE)
-  names(out_df) <- c("beta","hmu","E")
-  return(out_df)
-}
 
-####SIRS model
+
+
+
+
+
+
+
+####SIRS model #####################################################################################
 
 stepSIRS <- function(S,I,R,parameters){
-  N <- parameters[[1]]
-  beta <- parameters[[2]]
-  gam <- parameters[[3]]
-  rho <- parameters[[4]]
-  alpha <- parameters[[5]]
-  mu <- parameters[[6]]
+  N <- parameters[["N"]]
+  bet <- parameters[["beta"]]
+  gam <- parameters[["gamma"]]
+  rho <- parameters[["rho"]]
+  alpha <- parameters[["alpha"]]
+  mu <- parameters[["mu"]]
   
-  #t1 <- rbinom(n=1,size=S,prob=1-exp(-beta*I/N))
-  t1 <- rbinom(n=1,size=S,prob=1-exp(-beta*I/(1+alpha*I^2)))
+  #t1 <- rbinom(n=1,size=S,prob=1-exp(-bet*I/N))
+  t1 <- rbinom(n=1,size=S,prob=1-exp(-bet*I/(1+alpha*I^2)))
   t2 <- rbinom(n=1,size=I,prob=1-exp(-gam))
   t3 <- rbinom(n=1,size=R,prob=1-exp(-mu))
   
@@ -128,7 +117,7 @@ stepSIRS <- function(S,I,R,parameters){
 
 
 runSIRS <- function(parameters,nsteps,full_out=F){
-  N <- parameters[[1]]
+  N <- parameters[["N"]]
   I <- 1
   S <- N-1
   R <- 0
@@ -154,49 +143,20 @@ runSIRS <- function(parameters,nsteps,full_out=F){
 }
 
 
-varyRho_SIRS <- function(len,pars,rho_seq){
-  N <- pars[["N"]]
-  beta <- pars[["beta"]]
-  gam <- pars[["gamma"]]
-  alpha <- pars[["alpha"]]
-  mu <- pars[["mu"]]
+varyParameter_SIRS <- function(parameter_name,parameter_seq,parameters_list,sim_length=10000,outbreak_percentile=0.75){
   out_list <- list()
   counter <- 1
-  for(rho in rho_seq){
-    parameters <- list(N,beta,gam,rho,alpha,mu)
-    run_raw <- runSIS(parameters,10000) 
-    run_sym <- symbolizeOutput(run_raw,median(run_raw))
+  for(par in parameter_seq){
+    parameters_list[[parameter_name]] <- par
+    run_raw <- runSIRS(parameters_list,sim_length) 
+    run_sym <- symbolizeOutput(run_raw,outbreak_percentile,extremes = 1)
     gEE_out <- getExcessEntropy(seq=run_sym,maxL=20)
     E <- gEE_out[1]
     hmu_est <- gEE_out[2]
-    out_list[[counter]] <- c(rho,hmu_est,E)
+    out_list[[counter]] <- c(par,hmu_est,E)
     counter <- counter+1
   }
   out_df <- as.data.frame(do.call(rbind.data.frame, out_list),stringsAsFactors=FALSE)
-  names(out_df) <- c("rho","hmu","E")
-  return(out_df)
-}
-
-
-varyBeta_SIRS <- function(len,pars,beta_seq){
-  N <- pars[["N"]]
-  rho <- pars[["rho"]]
-  gam <- pars[["gamma"]]
-  alpha <- pars[["alpha"]]
-  mu <- pars[["mu"]]
-  out_list <- list()
-  counter <- 1
-  for(beta in beta_seq){
-    parameters <- list(N,beta,gam,rho,alpha,mu)
-    run_raw <- runSIS(parameters,10000) 
-    run_sym <- symbolizeOutput(run_raw,median(run_raw))
-    gEE_out <- getExcessEntropy(seq=run_sym,maxL=20)
-    E <- gEE_out[1]
-    hmu_est <- gEE_out[2]
-    out_list[[counter]] <- c(beta,hmu_est,E)
-    counter <- counter+1
-  }
-  out_df <- as.data.frame(do.call(rbind.data.frame, out_list),stringsAsFactors=FALSE)
-  names(out_df) <- c("beta","hmu","E")
+  names(out_df) <- c("par_value","hmu","E")
   return(out_df)
 }
