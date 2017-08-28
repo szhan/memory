@@ -7,9 +7,9 @@ source("./src/entropy_calc.R")
 source("./src/run_cssr_by_min_bic.R")
 
 
-pars <- list(N=800,beta=2.7,gamma=5,rho=1,alpha=1e-3)
-test <- runSIS(pars,100000) #full_out=TRUE for S,I in output
-plot(1:100000,test[1:100000],type="l")
+pars <- list(N=800,beta=2,gamma=5,rho=1,alpha=1e-3)
+test <- runSIS(pars,10000) #full_out=TRUE for S,I in output
+plot(9900:10000,test[9900:10000],type="l")
 abline(h=median(test),col="red")
 abline(h=quantile(test,0.6),col="red")
 abline(h=quantile(test,0.4),col="red")
@@ -49,17 +49,17 @@ plot(beta_out$hmu,beta_out$E,xlab=expression(h[mu]),ylab="E")
 lines(beta_out$hmu,beta_out$E)
 
 pars <- list(N=800,rho=1,gamma=5,alpha=1e-3)
-beta_out <- varyParameter_SIS(parameter_name="beta",parameter_seq=seq(0.1,5,0.3),parameters_list=pars,sim_length=10000,outbreak_percentile=0.75)
+beta_out <- varyParameter_SIS(parameter_name="beta",parameter_seq=seq(0.1,5,0.1),parameters_list=pars,sim_length=10000,outbreak_percentile=0.5,percentile_extremes=0)
 plot(beta_out$hmu,beta_out$E,xlab=expression(h[mu]),ylab="E")
 lines(beta_out$hmu,beta_out$E)
 
 pars <- list(N=800,beta=2.7,gamma=5,alpha=1e-3)
-rho_out <- varyParameter_SIS(parameter_name="rho",parameter_seq=seq(0.1,1,0.1),parameters_list=pars,sim_length=10000,outbreak_percentile=0.75)
+rho_out <- varyParameter_SIS(parameter_name="rho",parameter_seq=seq(0.1,1,0.1),parameters_list=pars,sim_length=10000,outbreak_percentile=0.5,percentile_extremes=0)
 plot(rho_out$hmu,rho_out$E,xlab=expression(h[mu]),ylab="E")
 lines(rho_out$hmu,rho_out$E)
 
 pars <- list(N=800,beta=2.7,rho=1,alpha=1e-3)
-gamma_out <- varyParameter_SIS(parameter_name="gamma",parameter_seq=seq(0.1,6,0.3),parameters_list=pars,sim_length=10000,outbreak_percentile=0.75)
+gamma_out <- varyParameter_SIS(parameter_name="gamma",parameter_seq=seq(0.1,6,0.3),parameters_list=pars,sim_length=10000,outbreak_percentile=0.75,percentile_extremes=1)
 plot(gamma_out$hmu,gamma_out$E,xlab=expression(h[mu]),ylab="E")
 lines(gamma_out$hmu,gamma_out$E)
 

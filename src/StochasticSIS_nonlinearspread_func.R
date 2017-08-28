@@ -29,6 +29,7 @@ stepSIS <- function(S,I,parameters){
   
   #t1 <- rbinom(n=1,size=S,prob=1-exp(-bet*I/N))
   t1 <- rbinom(n=1,size=S,prob=1-exp(-bet*I/(1+alpha*I^2)))
+  #t1 <- rbinom(n=1,size=S,prob=1-exp(-bet/(alpha+I^(-1))))
   t2 <- rbinom(n=1,size=I,prob=1-exp(-gam))
   
   S  <- S - t1 + t2;
@@ -64,13 +65,13 @@ runSIS <- function(parameters,nsteps,full_out=F){
     
 }
 
-varyParameter_SIS <- function(parameter_name,parameter_seq,parameters_list,sim_length=10000,outbreak_percentile=0.75){
+varyParameter_SIS <- function(parameter_name,parameter_seq,parameters_list,sim_length=10000,outbreak_percentile=0.75,percentile_extremes=1){
   out_list <- list()
   counter <- 1
   for(par in parameter_seq){
     parameters_list[[parameter_name]] <- par
     run_raw <- runSIS(parameters_list,sim_length) 
-    run_sym <- symbolizeOutput(run_raw,outbreak_percentile,extremes = 1)
+    run_sym <- symbolizeOutput(run_raw,outbreak_percentile,extremes = percentile_extremes)
     gEE_out <- getExcessEntropy(seq=run_sym,maxL=20)
     E <- gEE_out[1]
     hmu_est <- gEE_out[2]
