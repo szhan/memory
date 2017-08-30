@@ -15,15 +15,19 @@ sis_out <- SISg(params,sim_length=10000,S0=800,I0=1)
 plot(sis_out$time,sis_out$S,col="blue",ylim=c(1,1e3),type="l")
 lines(sis_out$time,sis_out$I,col="red")
 
-params <-  list(z=1e-5, beta=(1e-4)*(1.2), gamma=5e-1, rho=0.5, alpha=0,mu=1e-4)
-sirs_out <- SIRSg(params,sim_length=10000,S0=2e6,I0=1)
+#Gives stochastic amplification
+#params <-  list(z=1e-5, beta=(1e-4)*(1.2), gamma=5e-1, rho=0.5, alpha=0,mu=1e-4)
+#sirs_out <- SIRSg(params,sim_length=10000,S0=2e6,I0=1)
+
+params <-  list(z=1e-4, beta=(1e-3)*(1.2), gamma=5e0, rho=0.5, alpha=0,mu=1e-3)
+sirs_out <- SIRSg(params,sim_length=10000,S0=2e5,I0=1)
 
 plot(sirs_out$time,sirs_out$S,col="blue",ylim=c(1,1e6),type="l",log="y",xlim=c(0,1000))
 lines(sirs_out$time,sirs_out$I,col="red")
 lines(sirs_out$time,sirs_out$R,col="green")
 lines(sirs_out$time,sirs_out$B,col="magenta")
 
-plot(sirs_out$time,sirs_out$I,col="red",ylim=c(0,1000),xlim=c(0,4000),type="l")
+plot(sirs_out$time,sirs_out$I,col="red",ylim=c(0,2000),xlim=c(0,1000),type="l")
 
 #############
 # SIE Model #
