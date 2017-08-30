@@ -1,13 +1,15 @@
 # author: jlweissman
+#Everything is in nats. Deal with it.
 
 allsubstr <- function(x, n){substring(x, 1:(nchar(x) - n + 1), n:nchar(x))}
 
-shannonH <- function(p){-sum(p*log2(p))}
+shannonH <- function(p){-sum(p*log(p))}
 
 getHL <- function(L,seq){
   a <- table(allsubstr(seq,L))
   return(shannonH(a/sum(a)))
 }
+
 
 getEntropyCurve <- function(seq,maxL){
   HL <- lapply(1:maxL,getHL,seq=seq)
@@ -31,6 +33,89 @@ get.hmu <- function(i,w,seq,plotit=FALSE){
   
   return(hmu[min_ind])
 }
+
+#Bias correction for estimated shannon entropies from Grassberger 1988 Phys. Lett. A 
+#also see Grassberber 2003 arXiv for a better(?) correction and Bonachela et. al 2008 J. Phys. A: Math Theor. for another alternative
+# or Nemenmann, Shafee, Bialek 2002 for a Bayesian approach
+#n is a vector of empirical counts
+shannonH.grassberger88 <- function(n){
+  N <- sum(n)
+  chi_n <- -(n/N)*log(n/N) + (1/(2*N)) - ((-1)^n)/(N*(n+1))
+  return(sum(chi_n))
+}
+
+partialHarmonic <- function(start,end){return(sum(1/(start:end)))}
+
+shannonH.bonachela <- function(n){
+  N <- sum(n)
+  return((1/(N+2))*sum((n+1)*sapply(n+2,partialHarmonic,end=N+2)))
+}
+
+getRecurrence <- function(n_max){
+  em_gamma <- -digamma(1)
+  g <- c(-em_gamma-log(2),2-em_gamma-log(2),2-em_gamma-log(2))
+  counter <- 3
+  n <- 1
+  for(i in 1:(floor(n_max/2)-1)){
+    g[(counter+1):(counter+2)] <- g[counter]+2/(2*n+1)
+    counter <- counter+2
+    n <- n+1
+  }
+  return(g)
+}
+
+g03_chi <- function(ni,N,g){return((ni/N)*(log(N)-g[ni]))}
+
+shannonH.grassberger03 <- function(n,g){return(sum(sapply(n,g03_chi,N=sum(n),g=g)))}
+
+getHL.corrected <- function(L,seq,method,g=0){
+  n <- as.vector(table(allsubstr(seq,L)))
+  
+  if (method=="grassberger88"){
+    return(shannonH.grassberger88(n))
+    
+  } else if (method=="grassberger03"){
+    return(shannonH.grassberger03(n,g))
+    
+  } else if (method=="bonachela"){
+    return(shannonH.bonachela(n))
+    
+  } else {
+    stop("Not a valid method")
+  }
+
+}
+
+getEntropyCurve.corrected <- function(seq,maxL,method="grassberger88"){
+  if(method=="grassberger03"){
+    n_max <- max(as.vector(table(allsubstr(seq,1))))
+    g <- getRecurrence(n_max)
+    HL <- lapply(1:maxL,getHL.corrected,seq=seq,method=method,g=g)
+  } else {
+    HL <- lapply(1:maxL,getHL.corrected,seq=seq,method=method)
+  }
+  
+  hmu <- diff(unlist(HL))
+  return(hmu)
+}
+
+get.hmu.corrected <- function(i,w,seq,plotit=FALSE){
+  maxL <- 20
+  seq <- substr(seq,i,i+w-1)
+  hmu <- getEntropyCurve.corrected(seq,maxL)
+  max_ind <- which(abs(diff(hmu)) %in% max(abs(diff(hmu))))
+  min_ind <- which(abs(diff(hmu[1:max_ind])) %in% min(abs(diff(hmu[1:max_ind]))))
+  
+  if(plotit==TRUE){
+    par(mfrow=c(2,1))
+    plot(1:(min_ind),hmu[1:min_ind])
+    plot(hmu)
+    par(mfrow=c(1,1)) 
+  }
+  
+  return(hmu[min_ind])
+}
+
 
 var.hmu <- function(sequence,w){
   print(nchar(sequence)-w+1)

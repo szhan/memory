@@ -63,6 +63,11 @@ SISg_logistic <- function(params,sim_length=10000,S0=1e5,I0=0){
 }
 
 
+symbolizeSIR <- function(x,extinction_thresh,epidemic_thresh){
+  x_seq <- approx(x$time,x$I,xout=1:(floor(x$time[length(x$time)])-1))$y
+  return(paste((x_seq>extinction_thresh)+(x_seq>epidemic_thresh),collapse=""))
+}
+
 
 
 ########
@@ -129,6 +134,7 @@ SIEg.exact <- function(params,sim_length=10000,S0=1e5,I0=0,E0=0){
 ###########################################################################################
 # Seasonally forced stochastic SIR (Black and McKane 2010 Journal of Theoretical Biology) #
 ###########################################################################################
+#Not the best way to do this, see Anderson 2008 on arXiv (A modified next reaction method...) or the bioPN package (simulating w/ time-dependent parameters)
 
 SIRSgRates_forced <- function(x, params, t) {
   return(c(x["S"]*(params$beta*x["I"]/(1+params$alpha*x["I"]^2) + params$z), #Infection rate 
