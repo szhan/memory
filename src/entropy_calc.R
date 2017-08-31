@@ -80,6 +80,9 @@ getHL.corrected <- function(L,seq,method,g=0){
   } else if (method=="bonachela"){
     return(shannonH.bonachela(n))
     
+  } else if (method %in% c("ML","MM","Jeffreys","Laplace","SG","minimax","CS","NSB","shrink")){
+    return(entropy(n,method=method))
+    
   } else {
     stop("Not a valid method")
   }
